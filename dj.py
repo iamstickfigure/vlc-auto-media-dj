@@ -158,7 +158,7 @@ class AutoMediaDJ(BaseModel):
                 # If video_playing is None, we need to consume the queue and update the current playback info
                 if self.video_playing is None:
                     self.video_playing = self.video_queue.pop(0)
-                    logger.info(f"Playing video: {self.video_playing}")
+                    logger.info(f"Playing video: {self.video_playing}\n")
 
                     self.video_playing.start_time = timestamp - video_player_data.time
                     self.video_playing.end_time = (
@@ -185,7 +185,7 @@ class AutoMediaDJ(BaseModel):
                 # If audio_playing is None, we need to consume the queue and update the current playback info
                 if self.audio_playing is None:
                     self.audio_playing = self.audio_queue.pop(0)
-                    logger.info(f"Playing audio: {self.audio_playing}")
+                    logger.info(f"Playing audio: {self.audio_playing}\n")
 
                     self.audio_playing.start_time = timestamp - audio_player_data.time
                     self.audio_playing.end_time = (
@@ -292,8 +292,8 @@ class AutoMediaDJ(BaseModel):
 
             # If any active player is still playing, continue pausing
             logger.debug("Pausing all players...")
-            self.vlc.pause()
-            self.vlc_audio.pause()
+            self.vlc.pause(force=True)
+            self.vlc_audio.pause(force=True)
             return
 
         # It has been paused successfully

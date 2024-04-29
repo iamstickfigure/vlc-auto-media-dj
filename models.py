@@ -235,7 +235,7 @@ class PlaybackInfo(BaseModel):
     index: Optional[int] = None
     start_time: Optional[float] = None
     end_time: Optional[float] = None
-    volume: float = 100.0
+    volume: float = 1.0
     is_muted: bool = False
     chapter_range: Optional[Tuple[int, int]] = None
     skip_chapters: Optional[List[int]] = None
@@ -293,10 +293,20 @@ class PlaybackInfo(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return (
-            f"{self.entry.filename} ({self.entry.id})\n"
-            f" - chapter_range: {self.chapter_range}\n"
-            f" - skip_chapters: {self.skip_chapters}\n"
-            f" - is_muted: {self.is_muted}\n"
-            f" - volume: {self.volume}\n"
-        )
+        info = [
+            f"{self.entry.filename} ({self.entry.id})",
+        ]
+
+        if self.chapter_range is not None:
+            info.append(f" - chapter_range: {self.chapter_range}")
+
+        if self.skip_chapters is not None:
+            info.append(f" - skip_chapters: {self.skip_chapters}")
+
+        if self.is_muted:
+            info.append(f" - is_muted: {self.is_muted}")
+
+        if self.volume != 1.0:
+            info.append(f" - volume: {self.volume}")
+
+        return "\n".join(info)

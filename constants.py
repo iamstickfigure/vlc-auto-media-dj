@@ -22,6 +22,8 @@ class FieldIds(enum.IntEnum):
     VISUALS = 1003
     CHAPTER_RANGES = 1004
     SKIP_CHAPTERS = 1005
+    REQUIRED_AUDIO = 1006
+    REQUIRED_VISUALS = 1007
 
 
 # https://github.com/CyanVoxel/TagStudio/blob/main/tagstudio/src/core/library.py
@@ -67,6 +69,8 @@ CUSTOM_FIELDS = [
     {"id": FieldIds.VISUALS, "name": "Visuals", "type": "checkbox"},
     {"id": FieldIds.CHAPTER_RANGES, "name": "Chapter Ranges", "type": "text_box"},
     {"id": FieldIds.SKIP_CHAPTERS, "name": "Skip Chapters", "type": "text_box"},
+    {"id": FieldIds.REQUIRED_AUDIO, "name": "Required Audio", "type": "checkbox"},
+    {"id": FieldIds.REQUIRED_VISUALS, "name": "Required Visuals", "type": "checkbox"},
 ]
 
 ALL_FIELDS_BY_ID = {
@@ -112,6 +116,46 @@ class DJState(enum.StrEnum):
     PAUSING = "pausing"
     PAUSED = "paused"
     RESUMING = "resuming"
+
+
+class TagColor(enum.StrEnum):
+    DEFAULT = ""
+    BLACK = "black"
+    DARK_GRAY = "dark gray"
+    GRAY = "gray"
+    LIGHT_GRAY = "light gray"
+    WHITE = "white"
+    LIGHT_PINK = "light pink"
+    PINK = "pink"
+    MAGENTA = "magenta"
+    RED = "red"
+    RED_ORANGE = "red orange"
+    SALMON = "salmon"
+    ORANGE = "orange"
+    YELLOW_ORANGE = "yellow orange"
+    YELLOW = "yellow"
+    MINT = "mint"
+    LIME = "lime"
+    LIGHT_GREEN = "light green"
+    GREEN = "green"
+    TEAL = "teal"
+    CYAN = "cyan"
+    LIGHT_BLUE = "light blue"
+    BLUE = "blue"
+    BLUE_VIOLET = "blue violet"
+    VIOLET = "violet"
+    PURPLE = "purple"
+    PEACH = "peach"
+    BROWN = "brown"
+    LAVENDER = "lavender"
+    BLONDE = "blonde"
+    AUBURN = "auburn"
+    LIGHT_BROWN = "light brown"
+    DARK_BROWN = "dark brown"
+    COOL_GRAY = "cool gray"
+    WARM_GRAY = "warm gray"
+    OLIVE = "olive"
+    BERRY = "berry"
 
 
 class TagId(enum.IntEnum):
@@ -177,6 +221,13 @@ class TagId(enum.IntEnum):
     FANTASY = 1057
     NEEDS_WORK = 1058
     ROBOT_CHICKEN = 1059
+    REQUIRED_AUDIO = 1060
+    REQUIRED_VISUALS = 1061
+    PREFERRED_AUDIO = 1062
+    PREFERRED_VISUALS = 1063
+    BAD_AUDIO = 1064
+    BAD_VISUALS = 1065
+    OPTIONAL_AUDIO = 1066
 
 
 BASE_TAGS = [
@@ -184,26 +235,27 @@ BASE_TAGS = [
         "id": TagId.ARCHIVED,
         "name": "Archived",
         "aliases": ["Archive"],
-        "color": "Red",
+        "color": TagColor.RED,
     },
     {
         "id": TagId.FAVORITE,
         "name": "Favorite",
         "aliases": ["Favorited", "Favorites"],
-        "color": "Yellow",
+        "color": TagColor.YELLOW,
     },
     {
         "id": TagId.PERSON,
         "name": "Person",
         "shorthand": "human",
         "aliases": ["people", "human", "person"],
-        "color": "blue",
+        "color": TagColor.BLUE,
     },
     {
         "id": TagId.IMAGE,
         "name": "Image",
         "shorthand": "img",
         "aliases": ["picture"],
+        "subtags": [TagId.REQUIRED_VISUALS, TagId.NO_MUSIC, TagId.BAD_AUDIO],
     },
     {
         "id": TagId.VIDEO,
@@ -222,14 +274,14 @@ BASE_TAGS = [
         "name": "NSFW",
         "shorthand": "nsfw",
         "aliases": ["nsfw", "explicit", "adult", "pornographic"],
-        "color": "red",
+        "color": TagColor.RED,
     },
     {
         "id": TagId.MOVIE,
         "name": "Movie",
         "shorthand": "movie",
         "aliases": ["film", "cinema"],
-        "color": "blue",
+        "color": TagColor.BLUE,
         "subtag_ids": [TagId.VIDEO],
     },
     {
@@ -237,21 +289,28 @@ BASE_TAGS = [
         "name": "Silent Video",
         "shorthand": "silent_vid",
         "aliases": [""],
-        "subtag_ids": [TagId.VIDEO, TagId.NO_MUSIC],
+        "subtag_ids": [TagId.VIDEO, TagId.NO_MUSIC, TagId.BAD_AUDIO, TagId.VISUALS],
     },
     {
         "id": TagId.MUSIC_VIDEO,
         "name": "Music Video",
         "shorthand": "music_vid",
         "aliases": [""],
-        "subtag_ids": [TagId.VIDEO, TagId.MUSIC, TagId.VID_WITH_MUSIC, TagId.HAS_MUSIC],
+        "subtag_ids": [
+            TagId.VIDEO,
+            TagId.MUSIC,
+            TagId.VID_WITH_MUSIC,
+            TagId.HAS_MUSIC,
+            TagId.PREFERRED_AUDIO,
+            TagId.PREFERRED_VISUALS,
+        ],
     },
     {
         "id": TagId.GAMING_VIDEO,
         "name": "Gaming Video",
         "shorthand": "game_vid",
         "aliases": ["game"],
-        "color": "light green",
+        "color": TagColor.LIGHT_GREEN,
         "subtag_ids": [TagId.VIDEO, TagId.GAMING],
     },
     {
@@ -259,7 +318,7 @@ BASE_TAGS = [
         "name": "YouTube",
         "shorthand": "yt",
         "aliases": [""],
-        "color": "red",
+        "color": TagColor.RED,
         "subtag_ids": [TagId.VIDEO],
     },
     {
@@ -267,7 +326,7 @@ BASE_TAGS = [
         "name": "NSFW Memes",
         "shorthand": "nsfw_memes",
         "aliases": ["meme_nsfw", "nsfw_meme"],
-        "color": "red",
+        "color": TagColor.RED,
         "subtag_ids": [TagId.NSFW, TagId.MEME],
     },
     {
@@ -275,7 +334,7 @@ BASE_TAGS = [
         "name": "Music",
         "shorthand": "music",
         "aliases": [""],
-        "color": "blue",
+        "color": TagColor.BLUE,
         "subtag_ids": [TagId.VID_WITH_MUSIC, TagId.HAS_MUSIC],
     },
     {
@@ -283,14 +342,14 @@ BASE_TAGS = [
         "name": "Gaming",
         "shorthand": "game",
         "aliases": ["game"],
-        "color": "light green",
+        "color": TagColor.LIGHT_GREEN,
     },
     {
         "id": TagId.MEME,
         "name": "Meme",
         "shorthand": "meme",
         "aliases": ["funny"],
-        "color": "yellow",
+        "color": TagColor.YELLOW,
         "subtag_ids": [TagId.FUNNY],
     },
     {
@@ -298,7 +357,7 @@ BASE_TAGS = [
         "name": "Art Image",
         "shorthand": "art_img",
         "aliases": ["drawing", "painting", "illustration"],
-        "color": "purple",
+        "color": TagColor.PURPLE,
         "subtag_ids": [TagId.IMAGE],
     },
     {
@@ -306,7 +365,7 @@ BASE_TAGS = [
         "name": "Photography",
         "shorthand": "photo",
         "aliases": ["photo", "photograph"],
-        "color": "cyan",
+        "color": TagColor.CYAN,
         "subtag_ids": [TagId.IMAGE],
     },
     {
@@ -314,7 +373,7 @@ BASE_TAGS = [
         "name": "Screenshot",
         "shorthand": "screenshot",
         "aliases": ["screen", "capture"],
-        "color": "orange",
+        "color": TagColor.ORANGE,
         "subtag_ids": [TagId.IMAGE],
     },
     {
@@ -322,7 +381,7 @@ BASE_TAGS = [
         "name": "GIF",
         "shorthand": "gif",
         "aliases": ["animated"],
-        "color": "pink",
+        "color": TagColor.PINK,
         "subtag_ids": [TagId.IMAGE, TagId.SILENT_VIDEO],
     },
     {
@@ -330,7 +389,7 @@ BASE_TAGS = [
         "name": "Manga",
         "shorthand": "manga",
         "aliases": [""],
-        "color": "purple",
+        "color": TagColor.PURPLE,
         "subtag_ids": [TagId.IMAGE, TagId.COMIC, TagId.ANIME],
     },
     {
@@ -338,7 +397,7 @@ BASE_TAGS = [
         "name": "Comic",
         "shorthand": "comic",
         "aliases": [""],
-        "color": "orange",
+        "color": TagColor.ORANGE,
         "subtag_ids": [TagId.IMAGE],
     },
     {
@@ -346,14 +405,15 @@ BASE_TAGS = [
         "name": "Cartoon",
         "shorthand": "cartoon",
         "aliases": [""],
-        "color": "yellow",
+        "color": TagColor.YELLOW,
+        "subtag_ids": [TagId.REQUIRED_VISUALS],
     },
     {
         "id": TagId.ANIME,
         "name": "Anime",
         "shorthand": "anime",
         "aliases": [""],
-        "color": "blue",
+        "color": TagColor.BLUE,
         "subtag_ids": [TagId.CARTOON],
     },
     {
@@ -361,7 +421,7 @@ BASE_TAGS = [
         "name": "Illustration",
         "shorthand": "illustration",
         "aliases": [""],
-        "color": "purple",
+        "color": TagColor.PURPLE,
         "subtag_ids": [TagId.IMAGE],
     },
     {
@@ -369,7 +429,7 @@ BASE_TAGS = [
         "name": "Fanart",
         "shorthand": "fanart",
         "aliases": [""],
-        "color": "purple",
+        "color": TagColor.PURPLE,
         "subtag_ids": [TagId.IMAGE],
     },
     {
@@ -377,35 +437,35 @@ BASE_TAGS = [
         "name": "Cosplay",
         "shorthand": "cosplay",
         "aliases": [""],
-        "color": "cyan",
+        "color": TagColor.CYAN,
     },
     {
         "id": TagId.PHOTOMANIPULATION,
         "name": "Photomanipulation",
         "shorthand": "photomanip",
         "aliases": [""],
-        "color": "cyan",
+        "color": TagColor.CYAN,
     },
     {
         "id": TagId._3D_ART,
         "name": "3D Art",
         "shorthand": "3d_art",
         "aliases": [""],
-        "color": "purple",
+        "color": TagColor.PURPLE,
     },
     {
         "id": TagId.PIXEL_ART,
         "name": "Pixel Art",
         "shorthand": "pixel_art",
         "aliases": [""],
-        "color": "purple",
+        "color": TagColor.PURPLE,
     },
     {
         "id": TagId.VECTOR_ART,
         "name": "Vector Art",
         "shorthand": "vector_art",
         "aliases": [""],
-        "color": "purple",
+        "color": TagColor.PURPLE,
         "subtag_ids": [TagId.IMAGE],
     },
     {
@@ -413,7 +473,7 @@ BASE_TAGS = [
         "name": "Meme Image",
         "shorthand": "meme_img",
         "aliases": [""],
-        "color": "yellow",
+        "color": TagColor.YELLOW,
         "subtag_ids": [TagId.IMAGE, TagId.MEME],
     },
     {
@@ -421,22 +481,22 @@ BASE_TAGS = [
         "name": "Meme Video",
         "shorthand": "meme_vid",
         "aliases": [""],
-        "color": "yellow",
-        "subtag_ids": [TagId.VIDEO, TagId.MEME],
+        "color": TagColor.YELLOW,
+        "subtag_ids": [TagId.VIDEO, TagId.MEME, TagId.REQUIRED_VISUALS],
     },
     {
         "id": TagId.FUNNY,
         "name": "Funny",
         "shorthand": "funny",
         "aliases": ["lol", "haha", "humour", "humor", "comedy"],
-        "color": "yellow",
+        "color": TagColor.YELLOW,
     },
     {
         "id": TagId.STAR_WARS,
         "name": "Star Wars",
         "shorthand": "star_wars",
         "aliases": [""],
-        "color": "blue",
+        "color": TagColor.BLUE,
         "subtag_ids": [TagId.SCI_FI, TagId.SPACE],
     },
     {
@@ -444,7 +504,7 @@ BASE_TAGS = [
         "name": "Star Trek",
         "shorthand": "star_trek",
         "aliases": [""],
-        "color": "blue",
+        "color": TagColor.BLUE,
         "subtag_ids": [TagId.SCI_FI, TagId.SPACE],
     },
     {
@@ -452,7 +512,7 @@ BASE_TAGS = [
         "name": "Dr. Who",
         "shorthand": "dr_who",
         "aliases": ["doctor_who", "doctorwho", "drwho", "doctor"],
-        "color": "blue",
+        "color": TagColor.BLUE,
         "subtag_ids": [TagId.SCI_FI, TagId.SPACE],
     },
     {
@@ -460,22 +520,27 @@ BASE_TAGS = [
         "name": "Sci-Fi",
         "shorthand": "sci_fi",
         "aliases": ["science_fiction", "scifi"],
-        "color": "blue",
+        "color": TagColor.BLUE,
     },
     {
         "id": TagId.SPACE,
         "name": "Space",
         "shorthand": "space",
         "aliases": [""],
-        "color": "blue",
+        "color": TagColor.BLUE,
     },
     {
         "id": TagId.YOUTUBE_POOP,
         "name": "YouTube Poop",
         "shorthand": "ytp",
         "aliases": [""],
-        "color": "brown",
-        "subtag_ids": [TagId.YOUTUBE, TagId.SILLY_HUMOR],
+        "color": TagColor.BROWN,
+        "subtag_ids": [
+            TagId.YOUTUBE,
+            TagId.SILLY_HUMOR,
+            TagId.REQUIRED_VISUALS,
+            TagId.PREFERRED_AUDIO,
+        ],
     },
     {
         "id": TagId.AI_GENERATION,
@@ -491,22 +556,22 @@ BASE_TAGS = [
             "ai_art",
             "ai_generated",
         ],
-        "color": "green",
+        "color": TagColor.GREEN,
     },
     {
         "id": TagId.AUDIOVISUAL_VIDEO,
         "name": "AudioVisual Video",
         "shorthand": "audiovisual_vid",
         "aliases": ["av", "audiovisual"],
-        "color": "blue",
-        "subtag_ids": [TagId.VIDEO],
+        "color": TagColor.BLUE,
+        "subtag_ids": [TagId.VIDEO, TagId.PREFERRED_VISUALS],
     },
     {
         "id": TagId.VID_WITH_MUSIC,
         "name": "Video with Music",
         "shorthand": "vid_with_music",
         "aliases": ["has_music"],
-        "color": "blue",
+        "color": TagColor.BLUE,
         "subtag_ids": [TagId.VIDEO, TagId.HAS_MUSIC],
     },
     {
@@ -514,14 +579,14 @@ BASE_TAGS = [
         "name": "Satire",
         "shorthand": "satire",
         "aliases": ["satirical"],
-        "color": "orange",
+        "color": TagColor.ORANGE,
     },
     {
         "id": TagId.PARODY,
         "name": "Parody",
         "shorthand": "parody",
         "aliases": ["spoof"],
-        "color": "orange",
+        "color": TagColor.ORANGE,
         "subtag_ids": [TagId.FUNNY],
     },
     {
@@ -529,14 +594,14 @@ BASE_TAGS = [
         "name": "Sarcasm",
         "shorthand": "sarcasm",
         "aliases": ["sarcastic"],
-        "color": "orange",
+        "color": TagColor.ORANGE,
     },
     {
         "id": TagId.DARK_HUMOR,
         "name": "Dark Humor",
         "shorthand": "dark_humor",
         "aliases": ["black_comedy", "dark_comedy"],
-        "color": "brown",
+        "color": TagColor.BROWN,
         "subtag_ids": [TagId.FUNNY],
     },
     {
@@ -544,7 +609,7 @@ BASE_TAGS = [
         "name": "Silly Humor",
         "shorthand": "silly_humor",
         "aliases": ["silly", "goofy", "dumb"],
-        "color": "yellow",
+        "color": TagColor.YELLOW,
         "subtag_ids": [TagId.FUNNY],
     },
     {
@@ -552,71 +617,73 @@ BASE_TAGS = [
         "name": "Advertisement",
         "shorthand": "ad",
         "aliases": ["commercial"],
-        "color": "green",
+        "color": TagColor.GREEN,
+        "subtag_ids": [TagId.REQUIRED_VISUALS, TagId.REQUIRED_AUDIO],
     },
     {
         "id": TagId.POLITICAL,
         "name": "Political",
         "shorthand": "political",
         "aliases": ["politics"],
-        "color": "purple",
+        "color": TagColor.PURPLE,
     },
     {
         "id": TagId.NEEDS_CUTS,
         "name": "Needs Cuts",
         "shorthand": "needs_cut",
         "aliases": [""],
-        "color": "red orange",
+        "color": TagColor.RED_ORANGE,
     },
     {
         "id": TagId.NEEDS_TRIM,
         "name": "Needs Trim",
         "shorthand": "needs_trim",
         "aliases": ["trim_me"],
-        "color": "orange",
+        "color": TagColor.ORANGE,
     },
     {
         "id": TagId.BROKEN,
         "name": "Broken?",
         "shorthand": "broken",
         "aliases": [""],
-        "color": "gray",
+        "color": TagColor.GRAY,
     },
     {
         "id": TagId.VISUALS,
         "name": "Visuals",
         "shorthand": "vis",
         "aliases": ["can_mute", "audio_not_needed"],
-        "color": "cyan",
-        "subtag_ids": [TagId.VIDEO],
+        "color": TagColor.CYAN,
+        "subtag_ids": [TagId.VIDEO, TagId.OPTIONAL_AUDIO],
     },
     {
         "id": TagId.HAS_MUSIC,
         "name": "Has Music",
         "shorthand": "has_music",
         "aliases": ["mute_if_external_music"],
-        "color": "peach",
+        "color": TagColor.PEACH,
     },
     {
         "id": TagId.NO_MUSIC,
         "name": "No Music",
         "shorthand": "no_music",
         "aliases": ["can_play_w_external_music"],
-        "color": "blonde",
+        "color": TagColor.BLONDE,
     },
     {
         "id": TagId.NEEDS_VISUALS,
         "name": "Needs Visuals",
         "shorthand": "needs_visuals",
         "aliases": ["no_visuals", "boring_image"],
-        "color": "lavender",
+        "color": TagColor.LAVENDER,
+        "subtag_ids": [TagId.BAD_VISUALS, TagId.REQUIRED_AUDIO],
     },
     {
         "id": TagId.HAS_OPTIONAL_VISUALS,
         "name": "Has Optional Visuals",
         "shorthand": "opt_vis",
         "aliases": ["can_use_as_music", "can_be_music"],
-        "color": "lavender",
+        "color": TagColor.LAVENDER,
         "subtag_ids": [TagId.VIDEO],
     },
     {
@@ -624,7 +691,7 @@ BASE_TAGS = [
         "name": "Portrait Video",
         "shorthand": "portrait_vid",
         "aliases": [""],
-        "color": "light pink",
+        "color": TagColor.LIGHT_PINK,
         "subtag_ids": [TagId.VIDEO],
     },
     {
@@ -632,22 +699,79 @@ BASE_TAGS = [
         "name": "Fantasy",
         "shorthand": "fantasy",
         "aliases": [""],
-        "color": "green",
+        "color": TagColor.GREEN,
     },
     {
         "id": TagId.NEEDS_WORK,
         "name": "Needs Work",
         "shorthand": "wip",
         "aliases": [""],
-        "color": "black",
+        "color": TagColor.BLACK,
     },
     {
         "id": TagId.ROBOT_CHICKEN,
         "name": "Robot Chicken",
         "shorthand": "robot_chicken",
         "aliases": [""],
-        "subtag_ids": [TagId.SILLY_HUMOR, TagId.PARODY],
-        "color": "light gray",
+        "subtag_ids": [
+            TagId.SILLY_HUMOR,
+            TagId.PARODY,
+            TagId.REQUIRED_VISUALS,
+            TagId.PREFERRED_AUDIO,
+        ],
+        "color": TagColor.LIGHT_GRAY,
+    },
+    {
+        "id": TagId.REQUIRED_AUDIO,
+        "name": "Required Audio",
+        "shorthand": "req_audio",
+        "aliases": ["no_mute", "dont_mute", "audio_required"],
+        "color": TagColor.LIGHT_BLUE,
+    },
+    {
+        "id": TagId.REQUIRED_VISUALS,
+        "name": "Required Visuals",
+        "shorthand": "req_vis",
+        "aliases": ["visuals_required"],
+        "color": TagColor.LIGHT_PINK,
+    },
+    {
+        "id": TagId.PREFERRED_AUDIO,
+        "name": "Preferred Audio",
+        "shorthand": "pref_audio",
+        "aliases": ["audio_preferred"],
+        "color": TagColor.LIGHT_GREEN,
+    },
+    {
+        "id": TagId.PREFERRED_VISUALS,
+        "name": "Preferred Visuals",
+        "shorthand": "pref_vis",
+        "aliases": ["visuals_preferred"],
+        "color": TagColor.LIGHT_PINK,
+    },
+    {
+        "id": TagId.BAD_AUDIO,
+        "name": "Bad Audio",
+        "shorthand": "bad_audio",
+        "aliases": ["audio_not_good", "please_mute", "mute"],
+        "color": TagColor.RED,
+        "subtag_ids": [TagId.VISUALS, TagId.REQUIRED_VISUALS],
+    },
+    {
+        "id": TagId.BAD_VISUALS,
+        "name": "Bad Visuals",
+        "shorthand": "bad_vis",
+        "aliases": ["bad_image", "boring_video", "visuals_not_good"],
+        "color": TagColor.LIGHT_PINK,
+        "subtag_ids": [TagId.NEEDS_VISUALS],
+    },
+    {
+        "id": TagId.OPTIONAL_AUDIO,
+        "name": "Optional Audio",
+        "shorthand": "opt_audio",
+        "aliases": ["audio_optional", "can_mute"],
+        "color": TagColor.LIGHT_BLUE,
+        "subtag_ids": [TagId.VISUALS],
     },
 ]
 
