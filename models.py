@@ -23,7 +23,12 @@ class VlcPlayerDataSnapshot(BaseModel):
         if meta is None:
             return None
 
-        return meta.get("filename")
+        filename = meta.get("filename")
+
+        if filename is None:
+            return None
+
+        return filename.encode("latin1").decode("utf-8")
 
     @property
     def duration(self) -> Optional[str]:
@@ -136,6 +141,15 @@ class Entry(BaseModel):
 
     def has_content_tag(self, tag_id: int) -> bool:
         return search_for_tag(tag_id, self.content_tags)
+
+    def has_meta_tag(self, tag_id: int) -> bool:
+        return search_for_tag(tag_id, self.meta_tags)
+
+    @computed_field
+    def is_archived(self) -> bool:
+        return self.get_checkbox_val(FieldIds.ARCHIVED) or self.has_meta_tag(
+            TagId.ARCHIVED
+        )
 
     @computed_field
     def has_music(self) -> bool:
@@ -277,3 +291,12 @@ class PlaybackInfo(BaseModel):
                 **kwargs,
             )
         ]
+
+    def __str__(self) -> str:
+        return (
+            f"{self.entry.filename} ({self.entry.id})\n"
+            f" - chapter_range: {self.chapter_range}\n"
+            f" - skip_chapters: {self.skip_chapters}\n"
+            f" - is_muted: {self.is_muted}\n"
+            f" - volume: {self.volume}\n"
+        )

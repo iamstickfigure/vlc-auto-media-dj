@@ -1,8 +1,34 @@
+import logging
 from typing import Dict, List, Optional
 from constants import ALL_TAGS_BY_ID
 import urllib.parse
 import urllib
 import cachetools
+
+
+def get_logger(name: str):
+    # The filehandler should be at the debug level, the streamhandler at the info level
+    filehandler = logging.FileHandler("app.log")
+    filehandler.setLevel(logging.DEBUG)
+
+    streamhandler = logging.StreamHandler()
+    streamhandler.setLevel(logging.INFO)
+
+    # Create a formatter and add it to the filehandler
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    print_formatter = logging.Formatter("%(message)s")
+    filehandler.setFormatter(formatter)
+    streamhandler.setFormatter(print_formatter)
+
+    # Add the handlers to the logger
+    logger = logging.getLogger(name)
+    logger.addHandler(filehandler)
+    logger.addHandler(streamhandler)
+
+    # Set the logger level
+    logger.setLevel(logging.DEBUG)
+
+    return logger
 
 
 def windows_path_to_wsl(path: str):

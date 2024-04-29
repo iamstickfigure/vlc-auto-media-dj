@@ -176,6 +176,7 @@ class TagId(enum.IntEnum):
     PORTRAIT_VIDEO = 1056
     FANTASY = 1057
     NEEDS_WORK = 1058
+    ROBOT_CHICKEN = 1059
 
 
 BASE_TAGS = [
@@ -639,6 +640,14 @@ BASE_TAGS = [
         "shorthand": "wip",
         "aliases": [""],
         "color": "black",
+    },
+    {
+        "id": TagId.ROBOT_CHICKEN,
+        "name": "Robot Chicken",
+        "shorthand": "robot_chicken",
+        "aliases": [""],
+        "subtag_ids": [TagId.SILLY_HUMOR, TagId.PARODY],
+        "color": "light gray",
     },
 ]
 

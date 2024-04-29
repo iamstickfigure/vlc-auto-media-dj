@@ -12,10 +12,13 @@ from constants import (
 import os
 import itertools
 import random
+import utils
 
 from models import Entry, PlaybackInfo, VlcPlayerDataSnapshot
 from utils import windows_path_to_wsl
 from vlc_ext import HttpVLCExt
+
+logger = utils.get_logger(__name__)
 
 
 class AutoMediaDJ(BaseModel):
@@ -51,6 +54,11 @@ class AutoMediaDJ(BaseModel):
 
     @computed_field
     @cached_property
+    def media_choices(self) -> List[Entry]:
+        return [entry for entry in self.entries if not entry.is_archived]
+
+    @computed_field
+    @cached_property
     def tag_lookup_by_id(self) -> Dict[int, Any]:
         return {tag["id"]: tag for tag in self.tagstudio_data["tags"]}
 
@@ -65,21 +73,23 @@ class AutoMediaDJ(BaseModel):
     @computed_field
     @cached_property
     def music_choices(self) -> List[Entry]:
-        return [entry for entry in self.entries if entry.is_background_music]
+        return [entry for entry in self.media_choices if entry.is_background_music]
 
     @computed_field
     @cached_property
     def audiovisual_choices(self) -> List[Entry]:
-        return [entry for entry in self.entries if entry.is_audiovisual]
+        return [entry for entry in self.media_choices if entry.is_audiovisual]
 
     @computed_field
     @cached_property
     def visual_choices(self) -> List[Entry]:
-        return [entry for entry in self.entries if entry.is_visual]
+        return [entry for entry in self.media_choices if entry.is_visual]
 
     def queue_video(self, video_info: PlaybackInfo):
         if video_info.playback_mode == PlaybackMode.AUDIO:
             raise ValueError("Cannot queue audio with this method")
+
+        logger.debug(f"Queueing video: {video_info}")
 
         mrl_list = video_info.get_mrls()
 
@@ -91,6 +101,8 @@ class AutoMediaDJ(BaseModel):
     def queue_audio(self, audio_info: PlaybackInfo):
         if audio_info.playback_mode != PlaybackMode.AUDIO:
             raise ValueError("Can only queue audio with this method")
+
+        logger.debug(f"Queueing audio: {audio_info}")
 
         mrl_list = audio_info.get_mrls()
 
@@ -108,10 +120,12 @@ class AutoMediaDJ(BaseModel):
     def update_playback_info(self):
         if self.vlc.enabled and len(self.video_queue) < 2:
             # Wait for more videos to be queued before starting playback
+            logger.debug(f"Waiting for more videos to be queued...")
             return False
 
         if self.vlc_audio.enabled and len(self.audio_queue) < 2:
             # Wait for more audio to be queued before starting playback
+            logger.debug(f"Waiting for more audio to be queued...")
             return False
 
         video_player_data: Optional[VlcPlayerDataSnapshot] = None
@@ -132,6 +146,11 @@ class AutoMediaDJ(BaseModel):
                     and video_player_data.filename != self.video_playing.entry.filename
                 ):
                     # The current video has ended, and the next video has started
+                    logger.debug(
+                        f"Video ended: {self.video_playing.entry.filename}\n"
+                        f" - end_time: {self.video_playing.end_time} => {timestamp} (delta {timestamp - self.video_playing.end_time})\n"
+                    )
+
                     self.play_history.append(self.video_playing)
                     self.video_playing.end_time = timestamp
                     self.video_playing = None
@@ -139,6 +158,8 @@ class AutoMediaDJ(BaseModel):
                 # If video_playing is None, we need to consume the queue and update the current playback info
                 if self.video_playing is None:
                     self.video_playing = self.video_queue.pop(0)
+                    logger.info(f"Playing video: {self.video_playing}")
+
                     self.video_playing.start_time = timestamp - video_player_data.time
                     self.video_playing.end_time = (
                         self.video_playing.start_time + video_player_data.length
@@ -152,6 +173,11 @@ class AutoMediaDJ(BaseModel):
                     and audio_player_data.filename != self.audio_playing.entry.filename
                 ):
                     # The current audio has ended, and the next audio has started
+                    logger.debug(
+                        f"Audio ended: {self.audio_playing.entry.filename}\n"
+                        f" - end_time: {self.audio_playing.end_time} => {timestamp} (delta {timestamp - self.audio_playing.end_time})\n"
+                    )
+
                     self.play_history_audio.append(self.audio_playing)
                     self.audio_playing.end_time = timestamp
                     self.audio_playing = None
@@ -159,6 +185,8 @@ class AutoMediaDJ(BaseModel):
                 # If audio_playing is None, we need to consume the queue and update the current playback info
                 if self.audio_playing is None:
                     self.audio_playing = self.audio_queue.pop(0)
+                    logger.info(f"Playing audio: {self.audio_playing}")
+
                     self.audio_playing.start_time = timestamp - audio_player_data.time
                     self.audio_playing.end_time = (
                         self.audio_playing.start_time + audio_player_data.length
@@ -188,8 +216,10 @@ class AutoMediaDJ(BaseModel):
 
         if video_player_data:
             if vid_info and vid_info.is_muted and video_player_data.volume != 0:
+                logger.info("Muting video...")
                 self.vlc.set_volume(0)
             elif vid_info and not vid_info.is_muted and video_player_data.volume == 0:
+                logger.info("Unmuting video...")
                 self.vlc.set_volume(1)
 
             if video_player_data.state != "playing":
@@ -205,18 +235,25 @@ class AutoMediaDJ(BaseModel):
 
         if self.state == DJState.STARTING:
             if is_playing:
+                # All players are playing, so continue
+                logger.info(
+                    "All players are playing\n - updating DJState: STARTING => PLAYING"
+                )
                 self.state = DJState.PLAYING
                 return
 
             if not vid_info and video_player_data.volume == 0:
+                logger.debug("Starting: Unmuting video...")
                 self.vlc.set_volume(1)
 
             if not aud_info and audio_player_data.volume == 0:
+                logger.debug("Starting: Unmuting audio...")
                 self.vlc_audio.set_volume(1)
 
             if not is_ready:
                 return
 
+            logger.debug("Starting all active players...")
             self.vlc.play(muted=vid_info.is_muted)
             self.vlc_audio.play(muted=aud_info.is_muted)
             return
@@ -229,21 +266,32 @@ class AutoMediaDJ(BaseModel):
 
             if is_paused:
                 # All players suddenly paused, so pause the DJ
+                logger.info(
+                    "All players have paused\n - updating DJState: PLAYING => PAUSED"
+                )
                 self.state = DJState.PAUSED
                 return
 
             # If any active player is not playing anymore, initiate a pause
             # Don't return here. Might as well continue to the next state
+            logger.info(
+                "Some players are not playing, initiate pause\n"
+                " - updating DJState: PLAYING => PAUSING"
+            )
             self.state = DJState.PAUSING
 
         # A pause has been initiated
         if self.state == DJState.PAUSING:
             if is_paused:
                 # All players have successfully paused
+                logger.info(
+                    "All players have paused\n - updating DJState: PAUSING => PAUSED"
+                )
                 self.state = DJState.PAUSED
                 return
 
             # If any active player is still playing, continue pausing
+            logger.debug("Pausing all players...")
             self.vlc.pause()
             self.vlc_audio.pause()
             return
@@ -256,23 +304,32 @@ class AutoMediaDJ(BaseModel):
 
             # If any active player is not paused anymore, resume all players
             # Don't return here. Might as well continue to the next state
+            logger.info(
+                "Some players are not paused, initiate resume\n"
+                " - updating DJState: PAUSED => RESUMING"
+            )
             self.state = DJState.RESUMING
 
         # A resume has been initiated
         if self.state == DJState.RESUMING:
             if is_playing:
                 # All players have successfully resumed
+                logger.info(
+                    "All players have resumed\n - updating DJState: RESUMING => PLAYING"
+                )
                 self.state = DJState.PLAYING
                 return
 
             # If any active player is still paused, continue resuming
             # self.vlc.resume()
+            logger.debug("Resuming all players...")
             self.vlc.play(muted=vid_info.is_muted)
             self.vlc_audio.play(muted=aud_info.is_muted)
             return
 
     def start(self):
         # Start the DJ loop
+        logger.info("Starting DJ loop...")
         self.state = DJState.STARTING
         while True:
             self.think()
